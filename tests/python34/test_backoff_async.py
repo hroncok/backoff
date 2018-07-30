@@ -548,16 +548,15 @@ def test_on_exception_callable_gen_kwargs():
 
 
 @pytest.mark.asyncio
-def test_on_exception_coro_cancelling(event_loop):
+async def test_on_exception_coro_cancelling(event_loop):
     sleep_started_event = asyncio.Event()
 
     @backoff.on_predicate(backoff.expo)
-    @asyncio.coroutine
-    def coro():
+    async def coro():
         sleep_started_event.set()
 
         try:
-            yield from asyncio.sleep(10)
+            await asyncio.sleep(10)
         except asyncio.CancelledError:
             return True
 
@@ -565,17 +564,17 @@ def test_on_exception_coro_cancelling(event_loop):
 
     task = event_loop.create_task(coro())
 
-    yield from sleep_started_event.wait()
+    await sleep_started_event.wait()
 
     task.cancel()
 
-    assert (yield from task)
+    assert (await task)
 
 
 @pytest.mark.asyncio
-def test_on_exception_on_regular_function():
+async def test_on_exception_on_regular_function():
     # Force this function to be a running coroutine.
-    yield from asyncio.sleep(0)
+    await asyncio.sleep(0)
 
     with pytest.raises(TypeError) as excinfo:
         @backoff.on_exception(backoff.expo, ValueError)
@@ -585,9 +584,9 @@ def test_on_exception_on_regular_function():
 
 
 @pytest.mark.asyncio
-def test_on_predicate_on_regular_function():
+async def test_on_predicate_on_regular_function():
     # Force this function to be a running coroutine.
-    yield from asyncio.sleep(0)
+    await asyncio.sleep(0)
 
     with pytest.raises(TypeError) as excinfo:
         @backoff.on_predicate(backoff.expo)
